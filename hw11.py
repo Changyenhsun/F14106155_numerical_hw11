@@ -32,14 +32,14 @@ def finite_difference():
     F = np.zeros(n - 1)
 
     for i in range(1, n):
-        xi = a + i * h
+        xi = x_vals[i]
         pi = -(xi + 1)
         qi = 2
         ri = (1 - xi**2) * np.exp(-xi)
 
-        a_val = 1 - h * pi / 2
-        b_val = -2 + h**2 * qi
-        c_val = 1 + h * pi / 2
+        a_val = - (1 + h * pi / 2)
+        b_val = 2 + h**2 * qi
+        c_val = - (1 - h * pi / 2)
 
         if i > 1:
             A[i - 1, i - 2] = a_val
@@ -49,9 +49,8 @@ def finite_difference():
 
         F[i - 1] = -h**2 * ri
 
-    F[0] -= (1 - h * (x_vals[1] + 1) / 2) * alpha
-    F[-1] -= (1 + h * (x_vals[-2] + 1) / 2) * beta
-
+    F[0] += (1 + h * (-(x_vals[1] + 1)) / 2) * alpha
+    F[-1] += (1 - h * (-(x_vals[-2] + 1)) / 2) * beta
     Y_inner = solve(A, F)
     return np.concatenate(([alpha], Y_inner, [beta]))
 
@@ -72,12 +71,10 @@ def variational_approach(M=10):
                 lambda x: dphi(i, x) * dphi(j, x) + 2 * phi(i, x) * phi(j, x),
                 0, 1
             )[0]
-
         b_vec[i - 1] = quad(
-            lambda x: ((1 - x**2) * np.exp(-x) - (x + 1) * (beta - alpha)) * phi(i, x),
-            0, 1
-        )[0]
-
+        lambda x: ((1 - x**2) * np.exp(-x) + 2 * (1 + x)) * phi(i, x),
+        0, 1
+    )[0]
     c = solve(A, b_vec)
     return np.array([alpha + (beta - alpha) * x + sum(c[i] * phi(i + 1, x) for i in range(M)) for x in x_vals])
 
