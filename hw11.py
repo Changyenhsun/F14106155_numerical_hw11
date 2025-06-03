@@ -61,22 +61,60 @@ def phi(i, x):
 def dphi(i, x):
     return i * np.pi * np.cos(i * np.pi * x)
 
-def variational_approach(M=10):
-    A = np.zeros((M, M))
-    b_vec = np.zeros(M)
+def y1(x):
+    return 1 + x
+def r(x):
+    return (1 - x**2) * np.exp(-x)
 
-    for i in range(1, M + 1):
-        for j in range(1, M + 1):
-            A[i - 1, j - 1] = quad(
-                lambda x: dphi(i, x) * dphi(j, x) + 2 * phi(i, x) * phi(j, x),
-                0, 1
-            )[0]
-        b_vec[i - 1] = quad(
-        lambda x: ((1 - x**2) * np.exp(-x) + 2 * (1 + x)) * phi(i, x),
-        0, 1
-    )[0]
-    c = solve(A, b_vec)
-    return np.array([alpha + (beta - alpha) * x + sum(c[i] * phi(i + 1, x) for i in range(M)) for x in x_vals])
+def q(x):
+    return 2
+
+def F(x):
+    return r(x) + q(x) * y1(x)
+
+def trapezoidal(f, a, b, n):
+    h = (b - a) / n
+    result = 0.5 * (f(a) + f(b))
+    for i in range(1, n):
+        result += f(a + i * h)
+    return result * h
+
+def variational_approach(h=0.1, N=10):
+    n_points = int((b - a) / h) + 1
+    x_vals = [a + i * h for i in range(n_points)]
+    A = np.zeros((N, N))
+    B = np.zeros(N)
+
+    for i in range(N):
+        for j in range(N):
+            def integrand_A(x):
+                phi_i, phi_j = phi(i+1, x), phi(j+1, x)
+                dphi_i, dphi_j = dphi(i+1, x), dphi(j+1, x)
+                return dphi_i * dphi_j + 2 * phi_i * phi_j
+            
+            A[i][j] = trapezoidal(integrand_A, a, b, n_points - 1)
+
+        def integrand_B(x):
+            phi_i = phi(i+1, x)
+            return F(x) * phi_i
+
+        B[i] = trapezoidal(integrand_B, a, b, n_points - 1)
+
+    for i in range(N):
+        for j in range(i + 1, N):
+            factor = A[j][i] / A[i][i]
+            for k in range(i, N):
+                A[j][k] -= factor * A[i][k]
+            B[j] -= factor * B[i]
+
+    c = [0 for _ in range(N)]
+    for i in range(N - 1, -1, -1):
+        c[i] = B[i]
+        for j in range(i + 1, N):
+            c[i] -= A[i][j] * c[j]
+        c[i] /= A[i][i]
+
+    return [y1(x) + sum(c[i] * phi(i + 1, x) for i in range(N)) for x in x_vals]
 
 # 執行各方法
 y_shoot = shooting_method()
