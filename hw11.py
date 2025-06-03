@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.integrate import solve_ivp, quad
 from scipy.linalg import solve
+import matplotlib.pyplot as plt
 
 # 條件設定
 a, b = 0, 1
@@ -127,3 +128,17 @@ print(f"{'x':<5} | {'(a) Shooting':<14} | {'(b) Finite-Diff':<15} | {'(c) Variat
 print("-" * 58)
 for i in range(n + 1):
     print(f"{x_vals[i]:5.2f} | {y_shoot[i]:^14.6f} | {y_fd[i]:^15.6f} | {y_var[i]:^14.6f}")
+
+plt.figure(figsize=(10, 6))
+plt.grid(True)
+plt.plot(x_vals, y_shoot, 'o-', label='(a)Shooting Method', color='red')
+plt.plot(x_vals, y_fd, 'x--', label='(b)Finite-Difference', color='blue')
+plt.plot(x_vals, y_var, '^-', label='(c)Variational Method', color='green')
+
+plt.title('Comparison')
+plt.xlabel('x')
+plt.xticks(np.arange(0.1, 1.01, 0.1))
+plt.ylabel('y(x)')
+plt.legend()
+plt.tight_layout()
+plt.show()
