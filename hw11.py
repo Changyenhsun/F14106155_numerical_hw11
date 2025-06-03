@@ -73,7 +73,7 @@ def q(x):
     return 2
 
 def F(x):
-    return r(x) + q(x) * y1(x)
+    return (1 - x*x) * math.exp(x * x / 2)
 
 def trapezoidal(f, a, b, n):
     h = (b - a) / n
@@ -100,8 +100,7 @@ def variational_approach(h=0.1, N=10):
             A[i][j] = trapezoidal(integrand_A, a, b, n_points - 1)
 
         def integrand_B(x):
-            phi_i = phi(i+1, x)
-            return F(x) * phi_i
+            return  F(x) * phi(i+1, x)
 
         B[i] = trapezoidal(integrand_B, a, b, n_points - 1)
 
