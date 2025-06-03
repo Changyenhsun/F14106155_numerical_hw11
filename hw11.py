@@ -73,7 +73,7 @@ def q(x):
     return 2
 
 def F(x):
-    return (1 - x*x) * math.exp(x * x / 2)
+    return (1 - x**2) * np.exp(x**2/2)
 
 def trapezoidal(f, a, b, n):
     h = (b - a) / n
