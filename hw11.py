@@ -1,5 +1,4 @@
 import numpy as np
-import math
 from scipy.integrate import solve_ivp, quad
 from scipy.linalg import solve
 import matplotlib.pyplot as plt
@@ -93,8 +92,8 @@ def variational_approach(h=0.1, N=10):
             def integrand_A(x):
                 phi_i, phi_j = phi(i+1, x), phi(j+1, x)
                 dphi_i, dphi_j = dphi(i+1, x), dphi(j+1, x)
-                P = -math.exp(x * x / 2 + x)
-                Q = -2 * math.exp(x * x / 2 + x)
+                P = -np.exp(x**2 / 2 + x)
+                Q = -2 * np.exp(x**2/ 2 + x)
                 return P * dphi_i * dphi_j + Q * phi_i * phi_j
             
             A[i][j] = trapezoidal(integrand_A, a, b, n_points - 1)
