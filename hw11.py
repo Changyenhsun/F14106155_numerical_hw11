@@ -119,23 +119,83 @@ def variational_approach(h=0.1, N=10):
 
     return [y1(x) + sum(c[i] * phi(i + 1, x) for i in range(N)) for x in x_vals]
 
+# (c2) Variational Approach using hat basis
+def phi_hat(i, x, x_nodes):
+    if i == 0 or i == len(x_nodes) - 1:
+        return 0
+    xi = x_nodes[i]
+    xi_minus = x_nodes[i - 1]
+    xi_plus = x_nodes[i + 1]
+    if xi_minus <= x < xi:
+        return (x - xi_minus) / (xi - xi_minus)
+    elif xi <= x <= xi_plus:
+        return (xi_plus - x) / (xi_plus - xi)
+    else:
+        return 0
+
+def dphi_hat(i, x, x_nodes):
+    if i == 0 or i == len(x_nodes) - 1:
+        return 0
+    xi = x_nodes[i]
+    xi_minus = x_nodes[i - 1]
+    xi_plus = x_nodes[i + 1]
+    if xi_minus <= x < xi:
+        return 1 / (xi - xi_minus)
+    elif xi <= x <= xi_plus:
+        return -1 / (xi_plus - xi)
+    else:
+        return 0
+
+def phi_hat_array(i, x_arr, x_nodes):
+    return np.array([phi_hat(i, x, x_nodes) for x in x_arr])
+
+def variational_hat_basis():
+    N = 9
+    h_local = (b - a) / (N + 1)
+    x_nodes = np.linspace(a, b, N + 2)
+    A = np.zeros((N, N))
+    b_vec = np.zeros(N)
+
+    for i in range(1, N + 1):
+        for j in range(1, N + 1):
+            a_ij = quad(lambda x:
+                        dphi_hat(i, x, x_nodes) * dphi_hat(j, x, x_nodes) +
+                        (x + 1) * phi_hat(i, x, x_nodes) * dphi_hat(j, x, x_nodes) -
+                        2 * phi_hat(i, x, x_nodes) * phi_hat(j, x, x_nodes), a, b)[0]
+            A[i - 1, j - 1] = a_ij
+
+        b_i = quad(lambda x: (1 - x**2) * np.exp(-x) * phi_hat(i, x, x_nodes), a, b)[0]
+        b_i -= quad(lambda x: -2 * (alpha * (1 - x) + beta * x) * phi_hat(i, x, x_nodes), a, b)[0]
+        b_vec[i - 1] = b_i
+
+    c = np.linalg.solve(A, b_vec)
+    x_plot = np.linspace(a, b, n + 1)
+    y_hat = alpha * (1 - x_plot) + beta * x_plot
+    for i in range(1, N + 1):
+        y_hat += c[i - 1] * phi_hat_array(i, x_plot, x_nodes)
+    return x_plot, y_hat
+
+
 # 執行各方法
 y_shoot = shooting_method()
 y_fd = finite_difference()
 y_var = variational_approach()
+y_var_hat = variational_hat_basis()
+x_hat, y_var_hat = variational_hat_basis()
 
 # 輸出
 print()
-print(f"{'x':<5} | {'(a) Shooting':<14} | {'(b) Finite-Diff':<15} | {'(c) Variational':<14}")
-print("-" * 58)
+print(f"{'x':<5} | {'(a) Shooting':<14} | {'(b) Finite-Diff':<15} | {'(c1) Var_sin':<15} | {'(c2) Var_hat':<15}")
+print("-" * 80)
 for i in range(n + 1):
-    print(f"{x_vals[i]:5.2f} | {y_shoot[i]:^14.6f} | {y_fd[i]:^15.6f} | {y_var[i]:^14.6f}")
+    print(f"{x_vals[i]:5.2f} | {y_shoot[i]:^14.6f} | {y_fd[i]:^15.6f} | {y_var[i]:^15.6f} | {y_var_hat[i]:^15.6f}")
 
 plt.figure(figsize=(10, 6))
 plt.grid(True)
 plt.plot(x_vals, y_shoot, 'o-', label='(a)Shooting Method', color='red')
 plt.plot(x_vals, y_fd, 'x--', label='(b)Finite-Difference', color='blue')
-plt.plot(x_vals, y_var, '^-', label='(c)Variational Method', color='green')
+plt.plot(x_vals, y_var, '^-', label='(c1)Variational sin', color='green')
+plt.plot(x_vals, y_var_hat, 's-', label='(c2)Variational hat', color='purple')
 
 plt.title('Comparison')
 plt.xlabel('x')
